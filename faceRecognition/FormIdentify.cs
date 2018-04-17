@@ -153,6 +153,7 @@ namespace faceRecognition
             }
             else if (responsedString == "")
             {
+                dataTableIndent.Rows.Clear();
                 lblFoundStatus.Text = "Пользователь не найден, добавьте его";
             }
             responsedString = null;
