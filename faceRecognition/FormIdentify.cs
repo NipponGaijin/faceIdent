@@ -114,24 +114,26 @@ namespace faceRecognition
             {
                 Thread thrd = new Thread(sendPostRequest);
                 thrd.Start();
+                lblSearching.Text = "Идет поиск, ожидайте...";
                 buttonEnable = false;
-                goIdentify.Enabled = false;
+                //goIdentify.Enabled = false;
                 photoSaved = false;
             }
             if (stringResponsed)
             {
+                lblSearching.Text = "";
                 updateTable();
                 stringResponsed = false;
             }
-            if (buttonEnable)
-            {
+            //if (buttonEnable)
+            //{
                 
-                goIdentify.Enabled = true;
-            }
-            else
-            {
-                goIdentify.Enabled = false;
-            }
+            //    goIdentify.Enabled = true;
+            //}
+            //else
+            //{
+            //    goIdentify.Enabled = false;
+            //}
         }
 
         private void updateTable()
@@ -166,6 +168,7 @@ namespace faceRecognition
             requestIsStarted = true;
             try
             {
+                System.Threading.Thread.Sleep(500);
                 byte[] imageByte = File.ReadAllBytes(@"E:\prj\facerecBackup\faceRecognitionClient\faceRecognition\bin\Release\2.jpg");
                 byte[] stringToRequest = Encoding.UTF8.GetBytes("searchInDb\\method\\");
                 WebRequest request = WebRequest.Create("http://localhost:1111");
@@ -184,7 +187,6 @@ namespace faceRecognition
                 dataStream = response.GetResponseStream();
                 // Open the stream using a StreamReader for easy access.
                 StreamReader reader = new StreamReader(dataStream);
-
                 // Read the content.
                 string responseFromServer = reader.ReadToEnd();
                 // Display the content.

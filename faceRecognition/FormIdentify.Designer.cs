@@ -32,8 +32,8 @@
             this.labelInfoFlowLayout = new System.Windows.Forms.FlowLayoutPanel();
             this.lblInformation = new System.Windows.Forms.Label();
             this.lblFoundStatus = new System.Windows.Forms.Label();
+            this.lblSearching = new System.Windows.Forms.Label();
             this.addUser = new System.Windows.Forms.Button();
-            this.goIdentify = new System.Windows.Forms.Button();
             this.buttonsFlowLayout = new System.Windows.Forms.FlowLayoutPanel();
             this.btnSearch = new System.Windows.Forms.Button();
             this.tableContainer = new System.Windows.Forms.TableLayoutPanel();
@@ -50,9 +50,10 @@
             // 
             this.labelInfoFlowLayout.Controls.Add(this.lblInformation);
             this.labelInfoFlowLayout.Controls.Add(this.lblFoundStatus);
-            this.labelInfoFlowLayout.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.labelInfoFlowLayout.Controls.Add(this.lblSearching);
+            this.labelInfoFlowLayout.Dock = System.Windows.Forms.DockStyle.Left;
             this.labelInfoFlowLayout.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.labelInfoFlowLayout.Location = new System.Drawing.Point(112, 3);
+            this.labelInfoFlowLayout.Location = new System.Drawing.Point(246, 3);
             this.labelInfoFlowLayout.Name = "labelInfoFlowLayout";
             this.labelInfoFlowLayout.Size = new System.Drawing.Size(396, 49);
             this.labelInfoFlowLayout.TabIndex = 44;
@@ -73,9 +74,17 @@
             this.lblFoundStatus.Size = new System.Drawing.Size(0, 13);
             this.lblFoundStatus.TabIndex = 44;
             // 
+            // lblSearching
+            // 
+            this.lblSearching.AutoSize = true;
+            this.lblSearching.Location = new System.Drawing.Point(3, 26);
+            this.lblSearching.Name = "lblSearching";
+            this.lblSearching.Size = new System.Drawing.Size(0, 13);
+            this.lblSearching.TabIndex = 45;
+            // 
             // addUser
             // 
-            this.addUser.Location = new System.Drawing.Point(514, 3);
+            this.addUser.Location = new System.Drawing.Point(648, 3);
             this.addUser.Name = "addUser";
             this.addUser.Size = new System.Drawing.Size(128, 49);
             this.addUser.TabIndex = 39;
@@ -83,20 +92,9 @@
             this.addUser.UseVisualStyleBackColor = true;
             this.addUser.Click += new System.EventHandler(this.addUser_Click);
             // 
-            // goIdentify
-            // 
-            this.goIdentify.Location = new System.Drawing.Point(648, 3);
-            this.goIdentify.Name = "goIdentify";
-            this.goIdentify.Size = new System.Drawing.Size(128, 48);
-            this.goIdentify.TabIndex = 3;
-            this.goIdentify.Text = "Идентифицировать";
-            this.goIdentify.UseVisualStyleBackColor = true;
-            this.goIdentify.Click += new System.EventHandler(this.goIdentify_Click);
-            // 
             // buttonsFlowLayout
             // 
             this.buttonsFlowLayout.Controls.Add(this.btnSearch);
-            this.buttonsFlowLayout.Controls.Add(this.goIdentify);
             this.buttonsFlowLayout.Controls.Add(this.addUser);
             this.buttonsFlowLayout.Controls.Add(this.labelInfoFlowLayout);
             this.buttonsFlowLayout.Dock = System.Windows.Forms.DockStyle.Bottom;
@@ -187,12 +185,12 @@
         private System.Windows.Forms.Label lblInformation;
         private System.Windows.Forms.Label lblFoundStatus;
         private System.Windows.Forms.Button addUser;
-        private System.Windows.Forms.Button goIdentify;
         private System.Windows.Forms.FlowLayoutPanel buttonsFlowLayout;
         private System.Windows.Forms.Button btnSearch;
         private System.Windows.Forms.TableLayoutPanel tableContainer;
         private System.Windows.Forms.DataGridView dataTableIndent;
         private Emgu.CV.UI.ImageBox VideoBox;
+        private System.Windows.Forms.Label lblSearching;
 
 
 
