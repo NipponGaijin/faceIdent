@@ -1,0 +1,10 @@
+E:\prj\faceRecognition\faceRecognition\bin\Release\faceRecognition.exe.config
+E:\prj\faceRecognition\faceRecognition\bin\Release\faceRecognition.exe
+E:\prj\faceRecognition\faceRecognition\bin\Release\faceRecognition.pdb
+E:\prj\faceRecognition\faceRecognition\bin\Release\ZedGraph.dll
+E:\prj\faceRecognition\faceRecognition\obj\Release\faceRecognition.Form1.resources
+E:\prj\faceRecognition\faceRecognition\obj\Release\faceRecognition.Properties.Resources.resources
+E:\prj\faceRecognition\faceRecognition\obj\Release\faceRecognition.csproj.GenerateResource.Cache
+E:\prj\faceRecognition\faceRecognition\obj\Release\faceRecognition.exe
+E:\prj\faceRecognition\faceRecognition\obj\Release\faceRecognition.pdb
+E:\prj\faceRecognition\faceRecognition\obj\Release\faceRecognition.csprojResolveAssemblyReference.cache
