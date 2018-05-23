@@ -32,3 +32,6 @@ E:\prj\facerecBackup\faceRecognitionClient\faceRecognition\obj\Release\faceRecog
 E:\prj\facerecBackup\faceRecognitionClient\faceRecognition\obj\Release\faceRecognition.Properties.Resources.resources
 E:\prj\facerecBackup\faceRecognitionClient\faceRecognition\obj\Release\faceIndetification.csproj.GenerateResource.Cache
 E:\prj\facerecBackup\faceRecognitionClient\faceRecognition\obj\Release\faceRecognition.FormFullTextSearch.resources
+E:\prj\facerecBackup\faceRecognitionClient — копия\faceRecognition\bin\Release\faceRecognition.exe.config
+E:\prj\facerecBackup\faceRecognitionClient — копия\faceRecognition\obj\Release\faceRecognition.exe
+E:\prj\facerecBackup\faceRecognitionClient — копия\faceRecognition\obj\Release\faceRecognition.pdb

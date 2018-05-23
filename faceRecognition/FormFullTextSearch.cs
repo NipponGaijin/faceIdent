@@ -10,11 +10,30 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Net;
 using System.IO;
+using System.IO.Compression;
+using System.Text.RegularExpressions;
+using Emgu.CV;
+using Emgu.CV.CvEnum;
+using Emgu.CV.Structure;
+using Emgu.CV.UI;
+using Emgu.CV.Cvb;
+using Emgu.Util;
+
 namespace faceRecognition
 {
     public partial class FormFullTextSearch : Form
     {
-        
+        List<Record> listOfRecords = new List<Record>();
+        int currentID;
+        int viewedID = 0;
+
+        class Record
+        {   // : IEquatable<Record>
+            public int Id { get; set; }
+            public string Body { get; set; }
+            public string FileName { get; set; }
+        }
+
         public FormFullTextSearch()
         {
             InitializeComponent();
@@ -22,7 +41,13 @@ namespace faceRecognition
 
         private void FormFullTextSearch_Load(object sender, EventArgs e)
         {
-            string getRequestData;
+            searchingResults.ColumnCount = 2;
+            searchingResults.Columns[0].Name = "Название поля";
+            searchingResults.Columns[1].Name = "Содержание поля";
+            searchingResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            searchingResults.AllowUserToAddRows = false;
+            lableInfo.Text = "";
+            lablelCoincidences.Text = "";
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://localhost:1111/");
             HttpWebResponse response = null;
             try
@@ -30,7 +55,8 @@ namespace faceRecognition
                 response = (HttpWebResponse)req.GetResponse();
                 Stream responseData = response.GetResponseStream();
                 StreamReader readResponse = new StreamReader(responseData);
-                getRequestData = readResponse.ReadToEnd();
+                string getRequestData = readResponse.ReadToEnd();
+                labelTotal.Text = "Количество людей в базе:" + getRequestData;
                 response.Close();
                 responseData.Close();
                 readResponse.Close();
@@ -44,25 +70,117 @@ namespace faceRecognition
 
         private void searchingRequest()
         {
-            string searchPhrase = txtSearchInfo.Text;
-            string requestPhrase = "fullTextSearch\\method\\<text>" + searchPhrase; 
-            WebRequest req = WebRequest.Create("http://localhost:1111/");
-            req.Method = "POST";
-            byte[] requestByte = Encoding.UTF8.GetBytes(requestPhrase);
-            req.ContentLength = requestByte.Length;
-            Stream requestStream = req.GetRequestStream();
-            requestStream.Write(requestByte, 0, requestByte.Length);
-            requestStream.Close();
+            try
+            {
+                lableInfo.Text = "Идет поиск....";
+                string searchPhrase = txtSearchInfo.Text;
+                string requestPhrase = "fullTextSearch<method><text>" + searchPhrase;
+                WebRequest req = WebRequest.Create("http://localhost:1111/");
+                req.Method = "POST";
+                byte[] requestByte = Encoding.UTF8.GetBytes(requestPhrase);
+                req.ContentLength = requestByte.Length;
+                Stream requestStream = req.GetRequestStream();
+                requestStream.Write(requestByte, 0, requestByte.Length);
+                requestStream.Close();
 
-            WebResponse res = req.GetResponse();
-            requestStream = res.GetResponseStream();
-            StreamReader readResponse = new StreamReader(requestStream);
-            string readedResponse = readResponse.ReadToEnd();
-            readResponse.Close();
-            requestStream.Close();
-            res.Close();
+                WebResponse res = req.GetResponse();
+                requestStream = res.GetResponseStream();
+                byte[] data;
+                StreamReader readResponse = new StreamReader(requestStream);
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    readResponse.BaseStream.CopyTo(ms);
+                    data = ms.ToArray();
+                    
+                }
+                //string readedResponse = readResponse.ReadLine();
+                if (Encoding.UTF8.GetString(data) != "<NOTFOUND>")
+                {
+                    enableButtons();
+                    if (Directory.Exists("archive"))
+                    {
+                        Directory.Delete("archive", true);
+                    }
+                    File.WriteAllBytes("1.zip", data);
+                    ZipFile.ExtractToDirectory("1.zip", "archive");
+                    if (File.Exists("1.zip"))
+                    {
+                        File.Delete("1.zip");
+                    }
+                    string[] strSplitted = Regex.Split(Encoding.UTF8.GetString(data), @"<textBegin>");
+                    stringProcessAndListForming(strSplitted[1]);
+                }
+                else
+                {
+                    stringProcessAndListForming("");
+                }
+                //byte[] bytes = Encoding.UTF8.GetBytes(readedResponse);
+                readResponse.Close();
+                requestStream.Close();
+                res.Close();
+            }
+            catch (Exception e){
+                MessageBox.Show(e.ToString());
+            }
+            
         }
 
+        private void stringProcessAndListForming(string responsedString)
+        {
+            if (!string.IsNullOrWhiteSpace(responsedString))
+            {
+                listOfRecords.Clear();
+                lableInfo.Text = "Успешно.";
+                string[] strSplitted = System.Text.RegularExpressions.Regex.Split(responsedString, @"<end>");
+                for (int i = 0; i < strSplitted.Length; i++)
+                {
+                    if (strSplitted[i].Length != 0)
+                    {
+                        int Id = int.Parse(Regex.Split(strSplitted[i], @"<id>")[0]);
+                        string Body = Regex.Split(Regex.Split(strSplitted[i], @"<id>")[1], @"<filename>")[0];
+                        string FileName = Regex.Split(Regex.Split(strSplitted[i], @"<id>")[1], @"<filename>")[1];
+                
+                        listOfRecords.Add(new Record
+                        {   Id = Id,
+                            Body = Body,
+                            FileName = FileName});
+                    }
+                    
+                }
+                updateGUI(0);
+
+            }
+            else
+            {
+                lableInfo.Text = "Ничего не найдено.";
+                lablelCoincidences.Text = "Количество совпадений: 0";
+                clearGUI();
+            }
+        }
+
+        private void updateGUI(int index)
+        {
+            //Обновляем таблицу.
+            enableButtons(); 
+            lablelCoincidences.Text = "Количество совпадений: " + listOfRecords.Count.ToString();
+            string body = listOfRecords[index].Body;
+            currentID = listOfRecords[index].Id;
+            string[] splittedBody = Regex.Split(body, @"<<row>>");
+            searchingResults.Rows.Clear();
+            for (int i = 0; i < splittedBody.Length; i++)
+            {
+                if (splittedBody[i] != "")
+                {
+                    searchingResults.Rows.Add();
+                    searchingResults.Rows[i - 1].Cells["Название поля"].Value = (String)splittedBody[i].Split('=')[0];
+                    searchingResults.Rows[i - 1].Cells["Содержание поля"].Value = (String)splittedBody[i].Split('=')[1];
+                }
+            }
+            //string path = ;
+            Image<Rgb, Byte> img = new Image<Rgb, Byte>("archive\\archive_dir\\" + listOfRecords[index].FileName);
+            Image<Rgb, Byte> resized = img.Resize(img.Width / 4, img.Height / 4, Emgu.CV.CvEnum.INTER.CV_INTER_LINEAR);
+            image.Image = resized;
+        }
         private void btnSearch_Click(object sender, EventArgs e)
         {
             if (!string.IsNullOrWhiteSpace(txtSearchInfo.Text.ToString()))
@@ -71,6 +189,183 @@ namespace faceRecognition
             }
             
         }
-        
+
+        private void buttonNext_Click(object sender, EventArgs e)
+        {
+            
+            if (viewedID < listOfRecords.Count() - 1 && listOfRecords.Count != 0)
+            {
+                viewedID++;
+                updateGUI(viewedID);
+                
+            }
+            else if (listOfRecords.Count != 0)
+            {
+                viewedID = 0;
+                updateGUI(viewedID);
+            }
+            else
+            {
+                lableInfo.Text = "Список пуст.";
+            }
+        }
+
+        private void buttonPrev_Click(object sender, EventArgs e)
+        {
+            if (viewedID == 0 && listOfRecords.Count != 0)
+            {
+                viewedID = listOfRecords.Count - 1;
+                updateGUI(viewedID);
+            }
+            else if (listOfRecords.Count != 0)
+            {
+                viewedID--;
+                updateGUI(viewedID);
+            }
+            else
+            {
+                lableInfo.Text = "Список пуст.";
+            }
+        }
+
+        private void deleteRecord_Click(object sender, EventArgs e)
+        {
+            deleteRecordAndUpdateForm();
+        }
+
+        private void deleteRecordAndUpdateForm()
+        {
+            if (listOfRecords.Count != 0)
+            {
+                string id = listOfRecords[viewedID].Id.ToString();
+                try
+                {
+                    lableInfo.Text = "Идет удаление....";
+                    string searchPhrase = txtSearchInfo.Text;
+                    string requestPhrase = "delete_record<method><text>" + id;
+                    WebRequest req = WebRequest.Create("http://localhost:1111/");
+                    req.Method = "POST";
+                    byte[] requestByte = Encoding.UTF8.GetBytes(requestPhrase);
+                    req.ContentLength = requestByte.Length;
+                    Stream requestStream = req.GetRequestStream();
+                    requestStream.Write(requestByte, 0, requestByte.Length);
+                    requestStream.Close();
+
+                    WebResponse res = req.GetResponse();
+                    requestStream = res.GetResponseStream();
+                    StreamReader readResponse = new StreamReader(requestStream);
+                    string response = readResponse.ReadToEnd();
+                    if (response == "<OK>")
+                    {
+                        lableInfo.Text = "Успешно удалено";
+                        listOfRecords.RemoveAt(viewedID);
+                        labelTotal.Text = "Количество людей в базе:" + listOfRecords.Count.ToString();
+                        if (listOfRecords.Count == 0)
+                        {
+                            clearGUI();
+                        }
+                        else
+                        {
+                            if (viewedID != 0)
+                            {
+                                viewedID--;
+                                updateGUI(viewedID);
+                            }
+                            else
+                            {
+                                updateGUI(0);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        lableInfo.Text = "Не удалено";
+                    }
+                    readResponse.Close();
+                    requestStream.Close();
+                    res.Close();
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.ToString());
+                }
+            }   
+        }
+
+        private void clearGUI()
+        {
+            searchingResults.Rows.Clear();
+            lablelCoincidences.Text = "";
+            image.Image = null;
+            buttonNext.Enabled = false;
+            buttonPrev.Enabled = false;
+            deleteRecord.Enabled = false;
+            updateRecord.Enabled = false;
+        }
+
+        private void enableButtons()
+        {
+            buttonNext.Enabled = true;
+            buttonPrev.Enabled = true;
+            deleteRecord.Enabled = true;
+            updateRecord.Enabled = true;
+        }
+
+        private void disableButtons()
+        {
+            buttonNext.Enabled = false;
+            buttonPrev.Enabled = false;
+            deleteRecord.Enabled = false;
+            updateRecord.Enabled = false;
+        }
+
+        private void sendUpdateRequest()
+        {
+            if (listOfRecords.Count != 0)
+            {
+                string formedString = System.String.Empty;
+                for (int i = 0; i < searchingResults.RowCount; i++)
+                {
+                    formedString += "<<row>>" + (String)searchingResults["Название поля", i].Value + "=" + (String)searchingResults["Содержание поля", i].Value;
+                }
+                formedString += "<<row>>" + "Дата обновления=" + DateTime.Now.ToString();
+                //formedString = "update_record<method><text>" + formedString;
+                try
+                {
+                    lableInfo.Text = "Идет обновление....";
+                    string searchPhrase = txtSearchInfo.Text;
+                    string requestPhrase = "update_record<method><text>" + formedString + "<id>" + listOfRecords[viewedID].Id;
+                    WebRequest req = WebRequest.Create("http://localhost:1111/");
+                    req.Method = "POST";
+                    byte[] requestByte = Encoding.UTF8.GetBytes(requestPhrase);
+                    req.ContentLength = requestByte.Length;
+                    Stream requestStream = req.GetRequestStream();
+                    requestStream.Write(requestByte, 0, requestByte.Length);
+                    requestStream.Close();
+
+                    WebResponse res = req.GetResponse();
+                    requestStream = res.GetResponseStream();
+                    StreamReader readResponse = new StreamReader(requestStream);
+                    string response = readResponse.ReadToEnd();
+                    if (response == "<OK>")
+                    {
+                        lableInfo.Text = "Успешно обновлено";
+                    }
+                    else
+                    {
+                        lableInfo.Text = "Не обновлено";
+                    }
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.ToString());
+                }
+            }
+        }
+
+        private void updateRecord_Click(object sender, EventArgs e)
+        {
+            sendUpdateRequest();
+        }
     }
 }

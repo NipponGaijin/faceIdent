@@ -19,17 +19,18 @@ using System.Net;
 
 namespace faceRecognition
 {
+
     public partial class FormIdentify : Form
     {
         FormAddToDB formAddToDB = new FormAddToDB();
         FormFullTextSearch formFullTextSearch = new FormFullTextSearch();
         Capture capWebcam = null;
         getWebCam getWebCam = new getWebCam();
-        Image<Bgr, Byte> imgOriginal;       //Чистое изображение
-        Image<Gray, Byte> imgProcessed;     //Изображение с фильтром
+        //Image<Bgr, Byte> imgOriginal;       //Чистое изображение
+        //Image<Gray, Byte> imgProcessed;     //Изображение с фильтром
         HaarCascade cascade = new HaarCascade("haarcascade_frontalface_default.xml");
-        bool flag = false;
-        bool faceYep = false;
+        bool readyToPost = false;
+        //bool faceYep = false;
         bool photoSaved = false;
         static bool requestIsStarted;
         static bool stringResponsed = false;
@@ -53,6 +54,7 @@ namespace faceRecognition
             {
                 return;
             }
+
             dataTableIndent.ColumnCount = 2;
             dataTableIndent.Columns[0].Name = "Название поля";
             dataTableIndent.Columns[1].Name = "Содержание поля";
@@ -67,53 +69,74 @@ namespace faceRecognition
             {
                 getWebCam.disposeCam();
             }
+            if (File.Exists("2.jpg"))
+            {
+                File.Delete("2.jpg");
+            }
 
         }
+
         private void processFrameAndUpdGui(object sender, EventArgs e)
         {
             Image<Bgr, Byte> image = capWebcam.QueryFrame(); //.Resize(imageBox1.Width, imageBox1.Height, INTER.CV_INTER_LANCZOS4)
             Image<Bgr, Byte> imageROI = image;
             Image<Gray, Byte> grayImage = image.Convert<Gray, Byte>();
             //Ищем признаки лица
-            MCvAvgComp[][] Faces = grayImage.DetectHaarCascade(cascade, 1.2, 1, HAAR_DETECTION_TYPE.DO_CANNY_PRUNING, new Size(200, 200));
+            MCvAvgComp[][] Faces = grayImage.DetectHaarCascade(cascade, 1.2, 1, HAAR_DETECTION_TYPE.DO_CANNY_PRUNING, new Size(150, 150));
 
-            if (Faces[0].Length > 0)
-            {
-                lblInformation.Text = "";
-                //faceYep = true;
-            }
-            else
-            {
-                lblInformation.Text = "Дождитесь, пока лицо будет обведено рамкой";
-                //faceYep = false;
-            }
+            
             if (Faces[0].Length == 0)
             {
-                flag = true;
+                lblInformation.Text = "Дождитесь, пока лицо будет обведено рамкой";
+                readyToPost = true;   
             }
+
+            if (Faces[0].Length > 1)
+            {
+                lblInformation.Text = "В кадре больше одного лица";
+            }
+
+            //else if (Faces[0].Length == 0)
+            //{
+                
+            //    //faceYep = false;
+            //}
             foreach (MCvAvgComp face in Faces[0])
             {
                 //if (flag)
                 //{
-                if (Faces[0].Length > 0 && flag)
+                if (Faces[0].Length > 0 && Faces[0].Length < 2)
                 {
-                    imageROI.Save("2.jpg");
-                    flag = false;
-                    photoSaved = true;
-                    buttonEnable = false;
+                    lblInformation.Text = "";
+                    //faceYep = true;
                 }
                 
+                if (Faces[0].Length > 0 && Faces[0].Length < 2 && readyToPost)
+                {
+                    try
+                    {
+                        imageROI.Save("2.jpg");
+                        photoSaved = true;
+                        //buttonEnable = false;
+                    }
+                    catch (Exception exc)
+                    {
+                        MessageBox.Show(exc.ToString());
+                    }
                     
-                //}
+                }
+                
                 image.Draw(face.rect, new Bgr(Color.Green), 5);
             }
             //Выводим обработаное приложение
             VideoBox.Image = image;
 
-            if (photoSaved && !requestIsStarted)
+            if (photoSaved && !requestIsStarted && readyToPost && buttonEnable)
             {
+                readyToPost = false;
                 Thread thrd = new Thread(sendPostRequest);
                 thrd.Start();
+                requestIsStarted = true;
                 lblSearching.Text = "Идет поиск, ожидайте...";
                 buttonEnable = false;
                 //goIdentify.Enabled = false;
@@ -125,6 +148,7 @@ namespace faceRecognition
                 updateTable();
                 stringResponsed = false;
             }
+            
             //if (buttonEnable)
             //{
                 
@@ -141,7 +165,7 @@ namespace faceRecognition
             if (responsedString != "" && responsedString != null)
             {
                 lblFoundStatus.Text  = "Пользователь найден";
-                string[] strSplitted = System.Text.RegularExpressions.Regex.Split(responsedString, @"\\row\\");
+                string[] strSplitted = System.Text.RegularExpressions.Regex.Split(responsedString, @"<<row>>");
                 dataTableIndent.Rows.Clear();
                 for (int i = 0; i < strSplitted.Length; i++)
                 {
@@ -168,9 +192,10 @@ namespace faceRecognition
             requestIsStarted = true;
             try
             {
-                System.Threading.Thread.Sleep(500);
-                byte[] imageByte = File.ReadAllBytes(@"E:\prj\facerecBackup\faceRecognitionClient\faceRecognition\bin\Release\2.jpg");
-                byte[] stringToRequest = Encoding.UTF8.GetBytes("searchInDb\\method\\");
+                //System.Threading.Thread.Sleep(500);
+                byte[] imageByte = File.ReadAllBytes(@"2.jpg");
+                //File.Delete("2.jpg");
+                byte[] stringToRequest = Encoding.UTF8.GetBytes("searchInDb<method>");
                 WebRequest request = WebRequest.Create("http://localhost:1111");
                 request.ContentLength = imageByte.Length + stringToRequest.Length;
                 request.Method = "POST";
@@ -192,16 +217,16 @@ namespace faceRecognition
                 // Display the content.
                 // Clean up the streams.
                 
-                string[] splitted = System.Text.RegularExpressions.Regex.Split(responseFromServer, @"\\length\\");
+                string[] splitted = System.Text.RegularExpressions.Regex.Split(responseFromServer, @"<length>");
                 reader.Close();
                 dataStream.Close();
                 response.Close();
-                string[] a = System.Text.RegularExpressions.Regex.Split(splitted[1], @"\\content\\");
+                string[] a = System.Text.RegularExpressions.Regex.Split(splitted[1], @"<content>");
                 if (a[0] == "Succsess POST")
                 {
                     buttonEnable = true;
                     stringResponsed = true;
-                    responsedString = System.Text.RegularExpressions.Regex.Split(responseFromServer, @"\\content\\")[1];
+                    responsedString = System.Text.RegularExpressions.Regex.Split(responseFromServer, @"<content>")[1];
                 }
             }
             catch (Exception e)
@@ -221,7 +246,7 @@ namespace faceRecognition
         {
             //if (faceYep)
             //{
-                flag = true;
+                readyToPost = true;
             //}
             
             lblFoundStatus.Text = "";
@@ -236,7 +261,6 @@ namespace faceRecognition
         {
             formFullTextSearch.ShowDialog();
         }
-
 
     }
 }

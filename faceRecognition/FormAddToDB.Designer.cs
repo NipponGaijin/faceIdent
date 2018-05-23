@@ -193,6 +193,7 @@
             this.ClientSize = new System.Drawing.Size(984, 386);
             this.Controls.Add(this.tableLayoutElements);
             this.Controls.Add(this.menuStrip1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.MaximumSize = new System.Drawing.Size(99999, 99999);
             this.MinimumSize = new System.Drawing.Size(1000, 425);
             this.Name = "FormAddToDB";

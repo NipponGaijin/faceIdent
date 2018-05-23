@@ -70,7 +70,11 @@ namespace faceRecognition
             if (capWebcamAdd != null)
             {
                 this.Close();
-                //Application.Idle -= processFrameAndUpdGui;
+                Application.Idle -= processFrameAndUpdGui;
+            }
+            if (File.Exists("1.jpg"))
+            {
+                File.Delete("1.jpg");
             }
         }
 
@@ -139,8 +143,9 @@ namespace faceRecognition
         {
             try
             {
-                byte[] imageByte = File.ReadAllBytes(@"E:\prj\facerecBackup\faceRecognitionClient\faceRecognition\bin\Release\1.jpg");
-                byte[] headerStingByte = Encoding.UTF8.GetBytes("appendToDb\\method\\" + strToPost + "\\image\\");
+                byte[] imageByte = File.ReadAllBytes(@"1.jpg");
+                //File.Delete("1.jpg");
+                byte[] headerStingByte = Encoding.UTF8.GetBytes("appendToDb<method>" + strToPost + "<image>");
                 WebRequest request = WebRequest.Create("http://localhost:1111/");
                 request.ContentLength = imageByte.Length + headerStingByte.Length;
                 request.Method = "POST";
@@ -179,9 +184,9 @@ namespace faceRecognition
             string formedString = System.String.Empty;
             for (int i = 0; i < dataTable.RowCount; i++)
             {
-                formedString += "\\\\row\\\\" + (String)dataTable["Название поля", i].Value + "=" + (String)dataTable["Содержание поля", i].Value;
+                formedString += "<<row>>" + (String)dataTable["Название поля", i].Value + "=" + (String)dataTable["Содержание поля", i].Value;
             }
-            formedString += "\\\\row\\\\" + "Дата регистрации=" + DateTime.Now.ToString();
+            formedString += "<<row>>" + "Дата регистрации=" + DateTime.Now.ToString();
             strToPost = formedString;
         }
 
@@ -200,12 +205,12 @@ namespace faceRecognition
                 if (saveDialog.ShowDialog() == DialogResult.OK)
                 {
                     StreamWriter write = new StreamWriter(File.Create(saveDialog.FileName));
-                    dataTable.Rows.Clear();
+                    //dataTable.Rows.Clear();
                     for (int i = 0; i < dataTable.RowCount; i++)
                     {
                         if (i != dataTable.RowCount - 1)
                         {
-                            textToWrite += (String)dataTable["Название поля", i].Value + "||row||";
+                            textToWrite += (String)dataTable["Название поля", i].Value + "<<row>>";
                         }
                         else
                         {
@@ -230,7 +235,8 @@ namespace faceRecognition
                 StreamReader read = new StreamReader(File.OpenRead(openFile.FileName));
                 readedText = read.ReadToEnd();
                 read.Dispose();
-                string[] splitted = System.Text.RegularExpressions.Regex.Split(readedText, @"\|\|row\|\|");
+                string[] splitted = System.Text.RegularExpressions.Regex.Split(readedText, @"<<row>>");
+                dataTable.Rows.Clear();
                 for (int i = 0; i < splitted.Length; i++)
                 {
                     dataTable.Rows.Add();
@@ -261,9 +267,6 @@ namespace faceRecognition
                 flag = true;
             }
         }
-
-        
-
     }
 }
 
