@@ -21,11 +21,8 @@ namespace faceRecognition
 {
     class getWebCam
     {
-
-
-        public Capture cam = null;
+        private Capture cam = null;
         
-
         public getWebCam()
         {
             if(cam == null)

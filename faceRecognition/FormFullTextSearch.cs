@@ -18,6 +18,8 @@ using Emgu.CV.Structure;
 using Emgu.CV.UI;
 using Emgu.CV.Cvb;
 using Emgu.Util;
+using System.Web.Script.Serialization;
+
 
 namespace faceRecognition
 {
@@ -26,11 +28,12 @@ namespace faceRecognition
         List<Record> listOfRecords = new List<Record>();
         int currentID;
         int viewedID = 0;
+        public string address;
 
         class Record
         {   // : IEquatable<Record>
             public int Id { get; set; }
-            public string Body { get; set; }
+            public Dictionary<string, dynamic> jsonStringDict { get; set; }
             public string FileName { get; set; }
         }
 
@@ -48,18 +51,12 @@ namespace faceRecognition
             searchingResults.AllowUserToAddRows = false;
             lableInfo.Text = "";
             lablelCoincidences.Text = "";
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://localhost:1111/");
-            HttpWebResponse response = null;
             try
             {
-                response = (HttpWebResponse)req.GetResponse();
-                Stream responseData = response.GetResponseStream();
-                StreamReader readResponse = new StreamReader(responseData);
-                string getRequestData = readResponse.ReadToEnd();
-                labelTotal.Text = "Количество людей в базе:" + getRequestData;
-                response.Close();
-                responseData.Close();
-                readResponse.Close();
+                using (WebTools getInfo = new WebTools())
+                {
+                    labelTotal.Text = "Количество людей в базе: " + getInfo.getUserCountFromServer(address);
+                }
             }
             catch (Exception exeption)
             {
@@ -74,50 +71,18 @@ namespace faceRecognition
             {
                 lableInfo.Text = "Идет поиск....";
                 string searchPhrase = txtSearchInfo.Text;
-                string requestPhrase = "fullTextSearch<method><text>" + searchPhrase;
-                WebRequest req = WebRequest.Create("http://localhost:1111/");
-                req.Method = "POST";
-                byte[] requestByte = Encoding.UTF8.GetBytes(requestPhrase);
-                req.ContentLength = requestByte.Length;
-                Stream requestStream = req.GetRequestStream();
-                requestStream.Write(requestByte, 0, requestByte.Length);
-                requestStream.Close();
-
-                WebResponse res = req.GetResponse();
-                requestStream = res.GetResponseStream();
-                byte[] data;
-                StreamReader readResponse = new StreamReader(requestStream);
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    readResponse.BaseStream.CopyTo(ms);
-                    data = ms.ToArray();
-                    
-                }
-                //string readedResponse = readResponse.ReadLine();
-                if (Encoding.UTF8.GetString(data) != "<NOTFOUND>")
+                WebTools postImageAndInfo = new WebTools();
+                string data = postImageAndInfo.fullTextSearchRequest(address, searchPhrase);
+                if (data != "NOTFOUND")
                 {
                     enableButtons();
-                    if (Directory.Exists("archive"))
-                    {
-                        Directory.Delete("archive", true);
-                    }
-                    File.WriteAllBytes("1.zip", data);
-                    ZipFile.ExtractToDirectory("1.zip", "archive");
-                    if (File.Exists("1.zip"))
-                    {
-                        File.Delete("1.zip");
-                    }
-                    string[] strSplitted = Regex.Split(Encoding.UTF8.GetString(data), @"<textBegin>");
-                    stringProcessAndListForming(strSplitted[1]);
+                    stringProcessAndListForming(data);
                 }
                 else
                 {
                     stringProcessAndListForming("");
                 }
-                //byte[] bytes = Encoding.UTF8.GetBytes(readedResponse);
-                readResponse.Close();
-                requestStream.Close();
-                res.Close();
+                
             }
             catch (Exception e){
                 MessageBox.Show(e.ToString());
@@ -129,23 +94,22 @@ namespace faceRecognition
         {
             if (!string.IsNullOrWhiteSpace(responsedString))
             {
+                WebClient webClient = new WebClient();
                 listOfRecords.Clear();
                 lableInfo.Text = "Успешно.";
-                string[] strSplitted = System.Text.RegularExpressions.Regex.Split(responsedString, @"<end>");
-                for (int i = 0; i < strSplitted.Length; i++)
+                var jsonDict = new JavaScriptSerializer().Deserialize<Dictionary<string, dynamic>>(responsedString);
+                List<string> listOfKeys = new List<string>(jsonDict.Keys);
+                for (int i = 0; i < listOfKeys.Count; i++)
                 {
-                    if (strSplitted[i].Length != 0)
+
+                    webClient.DownloadFile(address + "/download_image/images/" + jsonDict[listOfKeys[i]]["filename"],
+                        "images\\" + jsonDict[listOfKeys[i]]["filename"]);
+                    listOfRecords.Add(new Record
                     {
-                        int Id = int.Parse(Regex.Split(strSplitted[i], @"<id>")[0]);
-                        string Body = Regex.Split(Regex.Split(strSplitted[i], @"<id>")[1], @"<filename>")[0];
-                        string FileName = Regex.Split(Regex.Split(strSplitted[i], @"<id>")[1], @"<filename>")[1];
-                
-                        listOfRecords.Add(new Record
-                        {   Id = Id,
-                            Body = Body,
-                            FileName = FileName});
-                    }
-                    
+                        Id = jsonDict[listOfKeys[i]]["id"],
+                        jsonStringDict = jsonDict[listOfKeys[i]]["record_content"],
+                        FileName = jsonDict[listOfKeys[i]]["filename"]
+                    });
                 }
                 updateGUI(0);
 
@@ -163,23 +127,20 @@ namespace faceRecognition
             //Обновляем таблицу.
             enableButtons(); 
             lablelCoincidences.Text = "Количество совпадений: " + listOfRecords.Count.ToString();
-            string body = listOfRecords[index].Body;
+            Dictionary<string, dynamic> jsonDict = listOfRecords[index].jsonStringDict;
             currentID = listOfRecords[index].Id;
-            string[] splittedBody = Regex.Split(body, @"<<row>>");
+            List<string> listOfRecordKeys = new List<string>(jsonDict.Keys);
             searchingResults.Rows.Clear();
-            for (int i = 0; i < splittedBody.Length; i++)
+
+            for (int i = 0; i < listOfRecordKeys.Count; i++)
             {
-                if (splittedBody[i] != "")
-                {
-                    searchingResults.Rows.Add();
-                    searchingResults.Rows[i - 1].Cells["Название поля"].Value = (String)splittedBody[i].Split('=')[0];
-                    searchingResults.Rows[i - 1].Cells["Содержание поля"].Value = (String)splittedBody[i].Split('=')[1];
-                }
+                searchingResults.Rows.Add();
+                searchingResults.Rows[i].Cells["Название поля"].Value = (String)listOfRecordKeys[i];
+                searchingResults.Rows[i].Cells["Содержание поля"].Value = (String)jsonDict[listOfRecordKeys[i]];
             }
             //string path = ;
-            Image<Rgb, Byte> img = new Image<Rgb, Byte>("archive\\archive_dir\\" + listOfRecords[index].FileName);
-            Image<Rgb, Byte> resized = img.Resize(img.Width / 4, img.Height / 4, Emgu.CV.CvEnum.INTER.CV_INTER_LINEAR);
-            image.Image = resized;
+            Image<Rgb, Byte> img = new Image<Rgb, Byte>("images\\" + listOfRecords[index].FileName);
+            image.Image = img;
         }
         private void btnSearch_Click(object sender, EventArgs e)
         {
@@ -237,24 +198,12 @@ namespace faceRecognition
         {
             if (listOfRecords.Count != 0)
             {
-                string id = listOfRecords[viewedID].Id.ToString();
+                int id = listOfRecords[viewedID].Id;
                 try
                 {
                     lableInfo.Text = "Идет удаление....";
-                    string searchPhrase = txtSearchInfo.Text;
-                    string requestPhrase = "delete_record<method><text>" + id;
-                    WebRequest req = WebRequest.Create("http://localhost:1111/");
-                    req.Method = "POST";
-                    byte[] requestByte = Encoding.UTF8.GetBytes(requestPhrase);
-                    req.ContentLength = requestByte.Length;
-                    Stream requestStream = req.GetRequestStream();
-                    requestStream.Write(requestByte, 0, requestByte.Length);
-                    requestStream.Close();
-
-                    WebResponse res = req.GetResponse();
-                    requestStream = res.GetResponseStream();
-                    StreamReader readResponse = new StreamReader(requestStream);
-                    string response = readResponse.ReadToEnd();
+                    WebTools deleteInfoFromServer = new WebTools();
+                    string response = deleteInfoFromServer.deleteRecordRequest(address, listOfRecords[viewedID].Id);
                     if (response == "<OK>")
                     {
                         lableInfo.Text = "Успешно удалено";
@@ -281,9 +230,6 @@ namespace faceRecognition
                     {
                         lableInfo.Text = "Не удалено";
                     }
-                    readResponse.Close();
-                    requestStream.Close();
-                    res.Close();
                 }
                 catch (Exception e)
                 {
@@ -323,43 +269,50 @@ namespace faceRecognition
         {
             if (listOfRecords.Count != 0)
             {
-                string formedString = System.String.Empty;
+                bool isNotOk = false;
+                Dictionary<string, dynamic> dictOfTableInfo = new Dictionary<string, dynamic>();
+                dictOfTableInfo.Add("id", currentID);
+                dictOfTableInfo.Add("content", new Dictionary<string, dynamic>());
                 for (int i = 0; i < searchingResults.RowCount; i++)
                 {
-                    formedString += "<<row>>" + (String)searchingResults["Название поля", i].Value + "=" + (String)searchingResults["Содержание поля", i].Value;
-                }
-                formedString += "<<row>>" + "Дата обновления=" + DateTime.Now.ToString();
-                //formedString = "update_record<method><text>" + formedString;
-                try
-                {
-                    lableInfo.Text = "Идет обновление....";
-                    string searchPhrase = txtSearchInfo.Text;
-                    string requestPhrase = "update_record<method><text>" + formedString + "<id>" + listOfRecords[viewedID].Id;
-                    WebRequest req = WebRequest.Create("http://localhost:1111/");
-                    req.Method = "POST";
-                    byte[] requestByte = Encoding.UTF8.GetBytes(requestPhrase);
-                    req.ContentLength = requestByte.Length;
-                    Stream requestStream = req.GetRequestStream();
-                    requestStream.Write(requestByte, 0, requestByte.Length);
-                    requestStream.Close();
-
-                    WebResponse res = req.GetResponse();
-                    requestStream = res.GetResponseStream();
-                    StreamReader readResponse = new StreamReader(requestStream);
-                    string response = readResponse.ReadToEnd();
-                    if (response == "<OK>")
+                    if (!String.IsNullOrEmpty((String)searchingResults["Содержание поля", i].Value) && !String.IsNullOrEmpty((String)searchingResults["Название поля", i].Value))
                     {
-                        lableInfo.Text = "Успешно обновлено";
+                        dictOfTableInfo["content"].Add((String)searchingResults["Название поля", i].Value, (String)searchingResults["Содержание поля", i].Value);
                     }
                     else
                     {
-                        lableInfo.Text = "Не обновлено";
+                        MessageBox.Show("В строке " + (i + 1).ToString() + " пустое значение!!!");
+                        isNotOk = true;
+                        break;
+                    }
+
+                }
+                if (!isNotOk)
+                {
+                    string jsonString = new JavaScriptSerializer().Serialize(dictOfTableInfo);
+                    try
+                    {
+                        lableInfo.Text = "Идет обновление....";
+                        string searchPhrase = txtSearchInfo.Text;
+                        int id = listOfRecords[viewedID].Id;
+                        WebTools updateRecordFromServer = new WebTools();
+                        string response = updateRecordFromServer.updateRecordRequest(address, listOfRecords[viewedID].Id, jsonString);
+                        if (response == "<OK>")
+                        {
+                            lableInfo.Text = "Успешно обновлено";
+                        }
+                        else
+                        {
+                            lableInfo.Text = "Не обновлено";
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show(e.ToString());
                     }
                 }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.ToString());
-                }
+                //formedString = "update_record<method><text>" + formedString;
+                
             }
         }
 
@@ -367,5 +320,6 @@ namespace faceRecognition
         {
             sendUpdateRequest();
         }
+
     }
 }

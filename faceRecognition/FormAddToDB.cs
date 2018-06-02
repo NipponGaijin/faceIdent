@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -16,6 +17,7 @@ using Emgu.CV.UI;
 using Emgu.CV.Cvb;
 using Emgu.Util;
 using System.Net;
+using System.Web.Script.Serialization;
 
 
 namespace faceRecognition
@@ -28,13 +30,15 @@ namespace faceRecognition
         Image<Bgr, Byte> imgOriginal;       //Чистое изображение
         Image<Gray, Byte> imgProcessed;     //Изображение с фильтром
         HaarCascade cascade = new HaarCascade("haarcascade_frontalface_default.xml");
+        Task sendPostRequestTask;
         bool flag = false;
         bool faceYep = false;
         bool photoSaved = false;
         static bool buttonEnable = true;
         static string strToPost;
-
-
+        public int maxFace;
+        public int minFace;
+        public string address;
         public FormAddToDB()
         {
             InitializeComponent();
@@ -46,7 +50,7 @@ namespace faceRecognition
             {
                 if (capWebcamAdd == null)
                 {
-                    capWebcamAdd = webcamAdd.cam;               // инициализируем объект записи с дефолтной вебки
+                    capWebcamAdd = webcamAdd.setCam();               // инициализируем объект записи с дефолтной вебки
                 }
                 
             }
@@ -60,8 +64,6 @@ namespace faceRecognition
             dataTable.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataTable.AllowUserToAddRows = false;
             Application.Idle += processFrameAndUpdGui;
-            //processFrameAndUpdGui(null, null);
-            
         }
 
 
@@ -72,9 +74,9 @@ namespace faceRecognition
                 this.Close();
                 Application.Idle -= processFrameAndUpdGui;
             }
-            if (File.Exists("1.jpg"))
+            if (File.Exists("savedAddFrame.jpg"))
             {
-                File.Delete("1.jpg");
+                File.Delete("savedAddFrame.jpg");
             }
         }
 
@@ -82,10 +84,9 @@ namespace faceRecognition
         private void processFrameAndUpdGui(object sender, EventArgs e)
         {
             Image<Bgr, Byte> image = capWebcamAdd.QueryFrame(); //.Resize(imageBox1.Width, imageBox1.Height, INTER.CV_INTER_LANCZOS4)
-            Image<Bgr, Byte> imageROI = image;
             Image<Gray, Byte> grayImage = image.Convert<Gray, Byte>();
             //Ищем признаки лица
-            MCvAvgComp[][] Faces = grayImage.DetectHaarCascade(cascade, 1.2, 1, HAAR_DETECTION_TYPE.DO_CANNY_PRUNING, new Size(200, 200));
+            MCvAvgComp[][] Faces = grayImage.DetectHaarCascade(cascade, 1.2, 1, HAAR_DETECTION_TYPE.DO_CANNY_PRUNING, new Size(maxFace, minFace));
 
             if (Faces[0].Length > 0)
             {
@@ -95,7 +96,7 @@ namespace faceRecognition
             {
                 faceYep = false;
             }
-            //textBox1.AppendText(faceYep.ToString() + " : " + Faces[0].Length.ToString() + '\n');
+
             if (Faces[0].Length > 0)
             {
                 lblInfo.Text = "";
@@ -103,8 +104,14 @@ namespace faceRecognition
                 {
                     if (dataTable.RowCount > 0 && flag)
                     {
-                        formingDataString();
-                        imageROI.Save("1.jpg");
+                        Image<Bgr, Byte> imageROI = image;
+                        Rectangle newRect = new Rectangle();
+                        newRect.X = face.rect.X - 40;
+                        newRect.Y = face.rect.Y - 40;
+                        newRect.Width = face.rect.Width + 60;
+                        newRect.Height = face.rect.Height + 60;
+                        imageROI.ROI = newRect;
+                        imageROI.Save("savedAddFrame.jpg");
                         flag = false;
                         photoSaved = true;
                         buttonEnable = false;
@@ -122,12 +129,9 @@ namespace faceRecognition
             //Выводим обработаное приложение
             VideoBox.Image = image;
             
-            //pictureBox1.Image = image.ToBitmap();
-            
             if (photoSaved)
             {
-                Thread thrd = new Thread(sendPostRequest);
-                thrd.Start();
+                sendPostRequestTask = Task.Run(() => sendPostRequest());
                 buttonEnable = false;
                 btnAddToDB.Enabled = false;
                 photoSaved = false;
@@ -139,38 +143,25 @@ namespace faceRecognition
             
         }
 
-        static void sendPostRequest()
+        async void sendPostRequest()
         {
             try
             {
-                byte[] imageByte = File.ReadAllBytes(@"1.jpg");
-                //File.Delete("1.jpg");
-                byte[] headerStingByte = Encoding.UTF8.GetBytes("appendToDb<method>" + strToPost + "<image>");
-                WebRequest request = WebRequest.Create("http://localhost:1111/");
-                request.ContentLength = imageByte.Length + headerStingByte.Length;
-                request.Method = "POST";
-                Stream dataStream = request.GetRequestStream();
-                // Write the data to the request stream.
-                dataStream.Write(headerStingByte, 0, headerStingByte.Length);
-                dataStream.Write(imageByte, 0, imageByte.Length);
-                // Close the Stream object.
-                dataStream.Close();
-                // Get the response.
-                WebResponse response = request.GetResponse();
-                // Get the stream containing content returned by the server.
-                dataStream = response.GetResponseStream();
-                // Open the stream using a StreamReader for easy access.
-                StreamReader reader = new StreamReader(dataStream);
-                // Read the content.
-                string responseFromServer = reader.ReadToEnd();
-                // Clean up the streams.
-                reader.Close();
-                dataStream.Close();
-                response.Close();
-                if (responseFromServer == "Succsess POST")
+                string jsonString = formingDataString();
+                if (jsonString != "NOT OK")
+                {
+                    WebTools postImageAndUserInfo = new WebTools();
+                    string responseFromServer = postImageAndUserInfo.postImageToServer(address, "savedAddFrame.jpg", "append_user_to_db", jsonString);
+                    if (responseFromServer == "Succsess POST")
+                    {
+                        buttonEnable = true;
+                    }
+                }
+                else
                 {
                     buttonEnable = true;
                 }
+                
             }
             catch (Exception e)
             {
@@ -179,15 +170,33 @@ namespace faceRecognition
             }
             
         }
-        private void formingDataString()
+        private string formingDataString()
         {
-            string formedString = System.String.Empty;
+            bool isNotOk = false;
+            Dictionary<string, string> dictOfTableInfo = new Dictionary<string, string>();
             for (int i = 0; i < dataTable.RowCount; i++)
             {
-                formedString += "<<row>>" + (String)dataTable["Название поля", i].Value + "=" + (String)dataTable["Содержание поля", i].Value;
+                if (!String.IsNullOrEmpty((String)dataTable["Содержание поля", i].Value) && !String.IsNullOrEmpty((String)dataTable["Название поля", i].Value))
+                {
+                    dictOfTableInfo.Add((String)dataTable["Название поля", i].Value, (String)dataTable["Содержание поля", i].Value);
+                }
+                else
+                {
+                    MessageBox.Show("В строке " + (i+1).ToString() + " пустое значение!!!");
+                    isNotOk = true;
+                    break;
+                }
+                
             }
-            formedString += "<<row>>" + "Дата регистрации=" + DateTime.Now.ToString();
-            strToPost = formedString;
+            if (!isNotOk)
+            {
+                string jsonString = new JavaScriptSerializer().Serialize(dictOfTableInfo);
+                return jsonString;
+            }
+            else
+            {
+                return "NOT OK";
+            }
         }
 
 
@@ -196,8 +205,6 @@ namespace faceRecognition
         {
             if (dataTable.RowCount != 0)
             {
-
-
                 SaveFileDialog saveDialog = new SaveFileDialog();
                 string textToWrite = System.String.Empty;
                 saveDialog.Title = "Save";

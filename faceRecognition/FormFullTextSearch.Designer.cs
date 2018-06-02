@@ -41,6 +41,7 @@
             this.lableInfo = new System.Windows.Forms.Label();
             this.topTable = new System.Windows.Forms.TableLayoutPanel();
             this.tableLeftPanel = new System.Windows.Forms.TableLayoutPanel();
+            this.image = new Emgu.CV.UI.ImageBox();
             this.ButtonsAndLables = new System.Windows.Forms.TableLayoutPanel();
             this.tableButtonsNextPrev = new System.Windows.Forms.TableLayoutPanel();
             this.buttonPrev = new System.Windows.Forms.Button();
@@ -48,7 +49,6 @@
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.lablelCoincidences = new System.Windows.Forms.Label();
             this.labelTotal = new System.Windows.Forms.Label();
-            this.image = new Emgu.CV.UI.ImageBox();
             this.formContent.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.searchingResults)).BeginInit();
             this.toolsPanel.SuspendLayout();
@@ -56,10 +56,10 @@
             this.tableRightPanel.SuspendLayout();
             this.topTable.SuspendLayout();
             this.tableLeftPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.image)).BeginInit();
             this.ButtonsAndLables.SuspendLayout();
             this.tableButtonsNextPrev.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.image)).BeginInit();
             this.SuspendLayout();
             // 
             // formContent
@@ -74,7 +74,7 @@
             this.formContent.Name = "formContent";
             this.formContent.RowCount = 1;
             this.formContent.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.formContent.Size = new System.Drawing.Size(681, 215);
+            this.formContent.Size = new System.Drawing.Size(775, 266);
             this.formContent.TabIndex = 0;
             // 
             // searchingResults
@@ -85,7 +85,7 @@
             this.searchingResults.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.searchingResults.Location = new System.Drawing.Point(3, 3);
             this.searchingResults.Name = "searchingResults";
-            this.searchingResults.Size = new System.Drawing.Size(334, 209);
+            this.searchingResults.Size = new System.Drawing.Size(381, 260);
             this.searchingResults.TabIndex = 0;
             // 
             // toolsPanel
@@ -96,11 +96,11 @@
             this.toolsPanel.ColumnCount = 1;
             this.toolsPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.toolsPanel.Controls.Add(this.tableTextBox, 0, 0);
-            this.toolsPanel.Location = new System.Drawing.Point(343, 3);
+            this.toolsPanel.Location = new System.Drawing.Point(390, 3);
             this.toolsPanel.Name = "toolsPanel";
             this.toolsPanel.RowCount = 1;
             this.toolsPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.toolsPanel.Size = new System.Drawing.Size(335, 209);
+            this.toolsPanel.Size = new System.Drawing.Size(382, 260);
             this.toolsPanel.TabIndex = 1;
             // 
             // tableTextBox
@@ -117,7 +117,7 @@
             this.tableTextBox.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
             this.tableTextBox.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 123F));
             this.tableTextBox.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 102F));
-            this.tableTextBox.Size = new System.Drawing.Size(329, 203);
+            this.tableTextBox.Size = new System.Drawing.Size(376, 254);
             this.tableTextBox.TabIndex = 2;
             // 
             // txtSearchInfo
@@ -126,7 +126,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtSearchInfo.Location = new System.Drawing.Point(3, 3);
             this.txtSearchInfo.Name = "txtSearchInfo";
-            this.txtSearchInfo.Size = new System.Drawing.Size(323, 20);
+            this.txtSearchInfo.Size = new System.Drawing.Size(370, 20);
             this.txtSearchInfo.TabIndex = 1;
             // 
             // tableRightPanel
@@ -137,7 +137,7 @@
             this.tableRightPanel.Controls.Add(this.deleteRecord, 0, 2);
             this.tableRightPanel.Controls.Add(this.btnSearch, 0, 0);
             this.tableRightPanel.Controls.Add(this.updateRecord, 0, 1);
-            this.tableRightPanel.Location = new System.Drawing.Point(210, 28);
+            this.tableRightPanel.Location = new System.Drawing.Point(257, 28);
             this.tableRightPanel.Name = "tableRightPanel";
             this.tableRightPanel.RowCount = 3;
             this.tableRightPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 33F));
@@ -202,7 +202,7 @@
             this.topTable.Name = "topTable";
             this.topTable.RowCount = 1;
             this.topTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.topTable.Size = new System.Drawing.Size(854, 221);
+            this.topTable.Size = new System.Drawing.Size(951, 272);
             this.topTable.TabIndex = 1;
             // 
             // tableLeftPanel
@@ -211,15 +211,27 @@
             | System.Windows.Forms.AnchorStyles.Left)));
             this.tableLeftPanel.ColumnCount = 1;
             this.tableLeftPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLeftPanel.Controls.Add(this.ButtonsAndLables, 0, 1);
             this.tableLeftPanel.Controls.Add(this.image, 0, 0);
+            this.tableLeftPanel.Controls.Add(this.ButtonsAndLables, 0, 1);
             this.tableLeftPanel.Location = new System.Drawing.Point(3, 3);
             this.tableLeftPanel.Name = "tableLeftPanel";
             this.tableLeftPanel.RowCount = 2;
-            this.tableLeftPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 105F));
-            this.tableLeftPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLeftPanel.Size = new System.Drawing.Size(164, 215);
+            this.tableLeftPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 160F));
+            this.tableLeftPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLeftPanel.Size = new System.Drawing.Size(164, 266);
             this.tableLeftPanel.TabIndex = 3;
+            // 
+            // image
+            // 
+            this.image.Enabled = false;
+            this.image.Location = new System.Drawing.Point(3, 3);
+            this.image.MaximumSize = new System.Drawing.Size(155, 155);
+            this.image.MinimumSize = new System.Drawing.Size(155, 155);
+            this.image.Name = "image";
+            this.image.Size = new System.Drawing.Size(155, 155);
+            this.image.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.image.TabIndex = 2;
+            this.image.TabStop = false;
             // 
             // ButtonsAndLables
             // 
@@ -227,13 +239,12 @@
             this.ButtonsAndLables.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.ButtonsAndLables.Controls.Add(this.tableButtonsNextPrev, 0, 1);
             this.ButtonsAndLables.Controls.Add(this.tableLayoutPanel1, 0, 0);
-            this.ButtonsAndLables.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ButtonsAndLables.Location = new System.Drawing.Point(3, 108);
+            this.ButtonsAndLables.Location = new System.Drawing.Point(3, 163);
             this.ButtonsAndLables.Name = "ButtonsAndLables";
             this.ButtonsAndLables.RowCount = 2;
             this.ButtonsAndLables.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.ButtonsAndLables.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-            this.ButtonsAndLables.Size = new System.Drawing.Size(160, 104);
+            this.ButtonsAndLables.Size = new System.Drawing.Size(155, 104);
             this.ButtonsAndLables.TabIndex = 2;
             // 
             // tableButtonsNextPrev
@@ -244,7 +255,7 @@
             this.tableButtonsNextPrev.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableButtonsNextPrev.Controls.Add(this.buttonPrev, 1, 0);
             this.tableButtonsNextPrev.Controls.Add(this.buttonNext, 0, 0);
-            this.tableButtonsNextPrev.Location = new System.Drawing.Point(30, 72);
+            this.tableButtonsNextPrev.Location = new System.Drawing.Point(27, 72);
             this.tableButtonsNextPrev.Name = "tableButtonsNextPrev";
             this.tableButtonsNextPrev.RowCount = 1;
             this.tableButtonsNextPrev.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
@@ -282,15 +293,15 @@
             this.tableLayoutPanel1.Location = new System.Drawing.Point(3, 3);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 2;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(154, 63);
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 29F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 41F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(149, 59);
             this.tableLayoutPanel1.TabIndex = 4;
             // 
             // lablelCoincidences
             // 
             this.lablelCoincidences.AutoSize = true;
-            this.lablelCoincidences.Location = new System.Drawing.Point(3, 38);
+            this.lablelCoincidences.Location = new System.Drawing.Point(3, 32);
             this.lablelCoincidences.Margin = new System.Windows.Forms.Padding(3, 3, 3, 0);
             this.lablelCoincidences.Name = "lablelCoincidences";
             this.lablelCoincidences.Size = new System.Drawing.Size(95, 13);
@@ -307,26 +318,14 @@
             this.labelTotal.TabIndex = 0;
             this.labelTotal.Text = "labelTotal";
             // 
-            // image
-            // 
-            this.image.Enabled = false;
-            this.image.Location = new System.Drawing.Point(3, 3);
-            this.image.MaximumSize = new System.Drawing.Size(100, 100);
-            this.image.MinimumSize = new System.Drawing.Size(160, 80);
-            this.image.Name = "image";
-            this.image.Size = new System.Drawing.Size(160, 99);
-            this.image.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.image.TabIndex = 2;
-            this.image.TabStop = false;
-            // 
             // FormFullTextSearch
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(854, 221);
+            this.ClientSize = new System.Drawing.Size(951, 272);
             this.Controls.Add(this.topTable);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
-            this.MinimumSize = new System.Drawing.Size(870, 260);
+            this.MinimumSize = new System.Drawing.Size(967, 311);
             this.Name = "FormFullTextSearch";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Поиск";
@@ -339,11 +338,11 @@
             this.tableRightPanel.ResumeLayout(false);
             this.topTable.ResumeLayout(false);
             this.tableLeftPanel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.image)).EndInit();
             this.ButtonsAndLables.ResumeLayout(false);
             this.tableButtonsNextPrev.ResumeLayout(false);
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.image)).EndInit();
             this.ResumeLayout(false);
 
         }
