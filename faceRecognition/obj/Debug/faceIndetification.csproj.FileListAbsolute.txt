@@ -1,3 +1,0 @@
-E:\prj\faceRecognition\faceRecognition\bin\Debug\faceRecognition.exe.config
-E:\prj\faceRecognition\faceRecognition\obj\Debug\faceRecognition.exe
-E:\prj\faceRecognition\faceRecognition\obj\Debug\faceRecognition.pdb
